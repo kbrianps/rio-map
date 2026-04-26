@@ -73,7 +73,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
 
   const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
   const minZoom = opts.minZoom ?? 11;
-  const maxZoom = opts.maxZoom ?? 16;
+  const maxZoom = opts.maxZoom ?? 15;
   const viewport: Viewport = {
     centerLat: opts.initialCenter?.[0] ?? RIO_CENTER[0],
     centerLng: opts.initialCenter?.[1] ?? RIO_CENTER[1],
