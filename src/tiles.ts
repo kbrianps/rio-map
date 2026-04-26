@@ -12,6 +12,8 @@ export interface TileCoord {
   /** Top-left position on screen (px, fractional). */
   screenX: number;
   screenY: number;
+  /** Size on screen in CSS px (depends on the fractional component of viewport.zoom). */
+  size: number;
 }
 
 export interface RioBoundary {
@@ -25,17 +27,19 @@ export interface RioBoundary {
  */
 export function visibleTiles(v: Viewport, boundary?: RioBoundary): TileCoord[] {
   const z = Math.floor(v.zoom);
-  const cx = lngToWorldX(v.centerLng, z);
-  const cy = latToWorldY(v.centerLat, z);
-  const left = cx - v.width / 2;
-  const top = cy - v.height / 2;
-  const right = cx + v.width / 2;
-  const bottom = cy + v.height / 2;
+  const scale = Math.pow(2, v.zoom - z);
+  const tileSizeOnScreen = TILE_SIZE * scale;
+  const cxScaled = lngToWorldX(v.centerLng, z) * scale;
+  const cyScaled = latToWorldY(v.centerLat, z) * scale;
+  const left = cxScaled - v.width / 2;
+  const top = cyScaled - v.height / 2;
+  const right = cxScaled + v.width / 2;
+  const bottom = cyScaled + v.height / 2;
 
-  const minTileX = Math.floor(left / TILE_SIZE);
-  const maxTileX = Math.floor(right / TILE_SIZE);
-  const minTileY = Math.floor(top / TILE_SIZE);
-  const maxTileY = Math.floor(bottom / TILE_SIZE);
+  const minTileX = Math.floor(left / tileSizeOnScreen);
+  const maxTileX = Math.floor(right / tileSizeOnScreen);
+  const minTileY = Math.floor(top / tileSizeOnScreen);
+  const maxTileY = Math.floor(bottom / tileSizeOnScreen);
 
   let tileBox: { minX: number; maxX: number; minY: number; maxY: number } | null = null;
   if (boundary) {
@@ -63,8 +67,9 @@ export function visibleTiles(v: Viewport, boundary?: RioBoundary): TileCoord[] {
         x: wrappedX,
         y: ty,
         z,
-        screenX: tx * TILE_SIZE - left,
-        screenY: ty * TILE_SIZE - top,
+        screenX: tx * tileSizeOnScreen - left,
+        screenY: ty * tileSizeOnScreen - top,
+        size: tileSizeOnScreen,
       });
     }
   }

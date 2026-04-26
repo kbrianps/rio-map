@@ -73,7 +73,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
 
   const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
   const minZoom = opts.minZoom ?? 11;
-  const maxZoom = opts.maxZoom ?? 18;
+  const maxZoom = opts.maxZoom ?? 16;
   const viewport: Viewport = {
     centerLat: opts.initialCenter?.[0] ?? RIO_CENTER[0],
     centerLng: opts.initialCenter?.[1] ?? RIO_CENTER[1],
@@ -112,6 +112,48 @@ export function initMap(opts: RioMapOpts): MapHandle {
   }
 
   const baseline = loadBaseline(requestRender);
+
+  let zoomAnimRaf: number | null = null;
+  function animateZoomTo(target: number, anchorX?: number, anchorY?: number) {
+    if (target === viewport.zoom) return;
+    if (zoomAnimRaf !== null) cancelAnimationFrame(zoomAnimRaf);
+    const start = viewport.zoom;
+    const startLat = viewport.centerLat;
+    const startLng = viewport.centerLng;
+    let endLat = startLat;
+    let endLng = startLng;
+    if (anchorX !== undefined && anchorY !== undefined) {
+      const before = screenToLatLng(anchorX, anchorY, viewport);
+      const tmpZoom = viewport.zoom;
+      viewport.zoom = target;
+      const after = screenToLatLng(anchorX, anchorY, viewport);
+      viewport.zoom = tmpZoom;
+      endLat = startLat + (before.lat - after.lat);
+      endLng = startLng + (before.lng - after.lng);
+    }
+    const startedAt = performance.now();
+    const dur = 220;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startedAt) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      viewport.zoom = start + (target - start) * eased;
+      viewport.centerLat = startLat + (endLat - startLat) * eased;
+      viewport.centerLng = startLng + (endLng - startLng) * eased;
+      requestRender();
+      if (t < 1) {
+        zoomAnimRaf = requestAnimationFrame(step);
+      } else {
+        zoomAnimRaf = null;
+        viewport.zoom = target;
+        viewport.centerLat = endLat;
+        viewport.centerLng = endLng;
+        loadVisibleTiles();
+        requestRender();
+      }
+    };
+    loadVisibleTiles();
+    zoomAnimRaf = requestAnimationFrame(step);
+  }
 
   function loadVisibleTiles() {
     for (const t of visibleTiles(viewport, boundary)) {
@@ -180,6 +222,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
       loadVisibleTiles();
       requestRender();
     },
+    requestZoom: animateZoomTo,
   });
 
   const ro = new ResizeObserver(() => {
@@ -290,16 +333,10 @@ export function initMap(opts: RioMapOpts): MapHandle {
       requestRender();
     },
     zoomIn() {
-      if (viewport.zoom >= maxZoom) return;
-      viewport.zoom = Math.min(maxZoom, viewport.zoom + 1);
-      loadVisibleTiles();
-      requestRender();
+      animateZoomTo(Math.min(maxZoom, Math.round(viewport.zoom) + 1));
     },
     zoomOut() {
-      if (viewport.zoom <= minZoom) return;
-      viewport.zoom = Math.max(minZoom, viewport.zoom - 1);
-      loadVisibleTiles();
-      requestRender();
+      animateZoomTo(Math.max(minZoom, Math.round(viewport.zoom) - 1));
     },
     on(event, cb) {
       if (event === 'click') clickCbs.push(cb);

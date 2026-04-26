@@ -7,10 +7,12 @@ export interface InteractionOpts {
   minZoom: number;
   maxZoom: number;
   onChange: () => void;
+  /** Animated zoom request used by wheel/pinch. Receives the target integer zoom and the cursor anchor. */
+  requestZoom: (target: number, anchorX: number, anchorY: number) => void;
 }
 
 export function attachInteractions(opts: InteractionOpts): () => void {
-  const { el, state, bounds, minZoom, maxZoom, onChange } = opts;
+  const { el, state, bounds, minZoom, maxZoom, onChange, requestZoom } = opts;
 
   function clampViewport() {
     const v = state.viewport;
@@ -63,16 +65,10 @@ export function attachInteractions(opts: InteractionOpts): () => void {
   function flushWheel() {
     wheelTimer = null;
     if (wheelAccum === 0) return;
-    const v = state.viewport;
-    const before = screenToLatLng(wheelCursor.x, wheelCursor.y, v);
     const step = wheelAccum > 0 ? 1 : -1;
     wheelAccum = 0;
-    v.zoom = Math.max(minZoom, Math.min(maxZoom, Math.round(v.zoom + step)));
-    const after = screenToLatLng(wheelCursor.x, wheelCursor.y, v);
-    v.centerLat += before.lat - after.lat;
-    v.centerLng += before.lng - after.lng;
-    clampViewport();
-    onChange();
+    const target = Math.max(minZoom, Math.min(maxZoom, Math.round(state.viewport.zoom) + step));
+    requestZoom(target, wheelCursor.x, wheelCursor.y);
   }
 
   function onWheel(e: WheelEvent) {
@@ -110,22 +106,15 @@ export function attachInteractions(opts: InteractionOpts): () => void {
       }
       const factor = newDist / pinchDist;
       if (Math.abs(factor - 1) > 0.05) {
-        const v = state.viewport;
         const rect = el.getBoundingClientRect();
         const cursorX = pinchCenter.x - rect.left;
         const cursorY = pinchCenter.y - rect.top;
-        const before = screenToLatLng(cursorX, cursorY, v);
         const targetZoom = Math.max(
           minZoom,
-          Math.min(maxZoom, Math.round(v.zoom + (factor > 1 ? 1 : -1))),
+          Math.min(maxZoom, Math.round(state.viewport.zoom) + (factor > 1 ? 1 : -1)),
         );
-        if (targetZoom !== v.zoom) {
-          v.zoom = targetZoom;
-          const after = screenToLatLng(cursorX, cursorY, v);
-          v.centerLat += before.lat - after.lat;
-          v.centerLng += before.lng - after.lng;
-          clampViewport();
-          onChange();
+        if (targetZoom !== state.viewport.zoom) {
+          requestZoom(targetZoom, cursorX, cursorY);
         }
         pinchDist = newDist;
       }

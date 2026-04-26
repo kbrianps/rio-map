@@ -77,7 +77,7 @@ function drawTiles(
   for (const t of tiles) {
     const img = cache.get(t.z, t.x, t.y);
     if (!img) continue;
-    ctx.drawImage(img, t.screenX, t.screenY, 256, 256);
+    ctx.drawImage(img, t.screenX, t.screenY, t.size, t.size);
   }
 }
 
