@@ -181,23 +181,43 @@ function drawTeardropPin(
 ): void {
   ctx.save();
   ctx.translate(x, y);
-  if (headingDeg !== null) ctx.rotate(((headingDeg + 180) * Math.PI) / 180);
   ctx.scale(scale, scale);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(-7, -3, -11, -10, -11, -16);
-  ctx.bezierCurveTo(-11, -22.5, -6, -27, 0, -27);
-  ctx.bezierCurveTo(6, -27, 11, -22.5, 11, -16);
-  ctx.bezierCurveTo(11, -10, 7, -3, 0, 0);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#fff';
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, -16, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
+
+  if (headingDeg !== null) {
+    ctx.rotate((headingDeg * Math.PI) / 180);
+    ctx.beginPath();
+    ctx.moveTo(0, 10);
+    ctx.bezierCurveTo(-6, 10, -11, 5.5, -11, 0);
+    ctx.bezierCurveTo(-11, -6, 0, -22, 0, -22);
+    ctx.bezierCurveTo(0, -22, 11, -6, 11, 0);
+    ctx.bezierCurveTo(11, 5.5, 6, 10, 0, 10);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#fff';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, -32);
+    ctx.bezierCurveTo(-6, -32, -11, -27.5, -11, -22);
+    ctx.bezierCurveTo(-11, -16, 0, 0, 0, 0);
+    ctx.bezierCurveTo(0, 0, 11, -16, 11, -22);
+    ctx.bezierCurveTo(11, -27.5, 6, -32, 0, -32);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#fff';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -22, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
   ctx.restore();
 }

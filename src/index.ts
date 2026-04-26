@@ -289,6 +289,18 @@ export function initMap(opts: RioMapOpts): MapHandle {
       loadVisibleTiles();
       requestRender();
     },
+    zoomIn() {
+      if (viewport.zoom >= maxZoom) return;
+      viewport.zoom = Math.min(maxZoom, viewport.zoom + 1);
+      loadVisibleTiles();
+      requestRender();
+    },
+    zoomOut() {
+      if (viewport.zoom <= minZoom) return;
+      viewport.zoom = Math.max(minZoom, viewport.zoom - 1);
+      loadVisibleTiles();
+      requestRender();
+    },
     on(event, cb) {
       if (event === 'click') clickCbs.push(cb);
     },

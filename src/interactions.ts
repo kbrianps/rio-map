@@ -57,20 +57,31 @@ export function attachInteractions(opts: InteractionOpts): () => void {
     onChange();
   }
 
-  function onWheel(e: WheelEvent) {
-    e.preventDefault();
+  let wheelAccum = 0;
+  let wheelTimer: number | null = null;
+  let wheelCursor = { x: 0, y: 0 };
+  function flushWheel() {
+    wheelTimer = null;
+    if (wheelAccum === 0) return;
     const v = state.viewport;
-    const rect = el.getBoundingClientRect();
-    const cursorX = e.clientX - rect.left;
-    const cursorY = e.clientY - rect.top;
-    const before = screenToLatLng(cursorX, cursorY, v);
-    const delta = -Math.sign(e.deltaY);
-    v.zoom = Math.max(minZoom, Math.min(maxZoom, Math.round(v.zoom + delta)));
-    const after = screenToLatLng(cursorX, cursorY, v);
+    const before = screenToLatLng(wheelCursor.x, wheelCursor.y, v);
+    const step = wheelAccum > 0 ? 1 : -1;
+    wheelAccum = 0;
+    v.zoom = Math.max(minZoom, Math.min(maxZoom, Math.round(v.zoom + step)));
+    const after = screenToLatLng(wheelCursor.x, wheelCursor.y, v);
     v.centerLat += before.lat - after.lat;
     v.centerLng += before.lng - after.lng;
     clampViewport();
     onChange();
+  }
+
+  function onWheel(e: WheelEvent) {
+    e.preventDefault();
+    const rect = el.getBoundingClientRect();
+    wheelCursor = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    wheelAccum += -Math.sign(e.deltaY);
+    if (wheelTimer !== null) clearTimeout(wheelTimer);
+    wheelTimer = window.setTimeout(flushWheel, 90);
   }
 
   let pinchDist = 0;

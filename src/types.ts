@@ -19,6 +19,8 @@ export interface MapHandle {
   recenter: () => void;
   fitToBuses: (buses: { lat: number; lng: number }[]) => void;
   flyTo: (lat: number, lng: number, zoom?: number) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
   on: (event: 'click', cb: (lat: number, lng: number) => void) => void;
   destroy: () => void;
 }
