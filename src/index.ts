@@ -1,5 +1,5 @@
 import rioBoundary from './rio-boundary.json';
-import { type Viewport, screenToLatLng } from './projection';
+import { type Viewport, screenToLatLng, latLngToScreen } from './projection';
 import { TileCache, visibleTiles, type RioBoundary } from './tiles';
 import { render, type RenderLayers, type BaselineImage } from './renderer';
 import { attachInteractions } from './interactions';
@@ -337,6 +337,18 @@ export function initMap(opts: RioMapOpts): MapHandle {
     },
     zoomOut() {
       animateZoomTo(Math.max(minZoom, Math.round(viewport.zoom) - 1));
+    },
+    getCenter() {
+      return { lat: viewport.centerLat, lng: viewport.centerLng, zoom: viewport.zoom };
+    },
+    isInView(lat, lng, paddingPx = 0) {
+      const p = latLngToScreen(lat, lng, viewport);
+      return (
+        p.x >= -paddingPx &&
+        p.x <= viewport.width + paddingPx &&
+        p.y >= -paddingPx &&
+        p.y <= viewport.height + paddingPx
+      );
     },
     on(event, cb) {
       if (event === 'click') clickCbs.push(cb);

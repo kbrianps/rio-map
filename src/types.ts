@@ -21,6 +21,8 @@ export interface MapHandle {
   flyTo: (lat: number, lng: number, zoom?: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
+  getCenter: () => { lat: number; lng: number; zoom: number };
+  isInView: (lat: number, lng: number, paddingPx?: number) => boolean;
   on: (event: 'click', cb: (lat: number, lng: number) => void) => void;
   destroy: () => void;
 }
