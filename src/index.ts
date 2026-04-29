@@ -237,8 +237,18 @@ export function initMap(opts: RioMapOpts): MapHandle {
   const clickCbs: Array<(lat: number, lng: number) => void> = [];
   const busClickCbs: Array<(bus: Bus) => void> = [];
   const BUS_CLICK_RADIUS_PX = 22;
-  canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
+  let pressStart: { x: number; y: number; t: number } | null = null;
+  container.addEventListener('pointerdown', (e) => {
+    pressStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+  });
+  container.addEventListener('pointerup', (e) => {
+    if (!pressStart) return;
+    const dx = e.clientX - pressStart.x;
+    const dy = e.clientY - pressStart.y;
+    const elapsed = performance.now() - pressStart.t;
+    pressStart = null;
+    if (Math.hypot(dx, dy) > 6 || elapsed > 600) return;
+    const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     if (busClickCbs.length > 0) {
