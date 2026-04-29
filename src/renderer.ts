@@ -5,10 +5,17 @@ import { visibleTiles, type RioBoundary } from './tiles';
 export interface RenderLayers {
   /** Polygon rings of the Rio municipality (outer rings as [lat, lng] arrays). */
   riomask?: number[][][] | null;
-  /** Bus polylines (each polyline is an array of [lat, lng] points). */
-  routes?: number[][][] | null;
+  /** Route layers — one per logical line, each with its own color. */
+  routes?: { shapes: number[][][]; color?: string }[] | null;
   /** Animated bus markers (interpolated current positions). */
-  buses?: { lat: number; lng: number; heading: number | null; stale: boolean; id: string }[];
+  buses?: {
+    lat: number;
+    lng: number;
+    heading: number | null;
+    stale: boolean;
+    id: string;
+    color?: string;
+  }[];
   /** User location pin. */
   user?: { lat: number; lng: number } | null;
 }
@@ -46,7 +53,13 @@ export function render(opts: RenderOptions): void {
   drawTiles(ctx, v, tileCache, boundary);
   drawMask(ctx, v, layers.riomask, opts.maskColor ?? '#f8fafc');
   drawRoutes(ctx, v, layers.routes, opts.routeColor ?? '#8b5cf6');
-  drawBuses(ctx, v, layers.buses, opts.busColorFresh ?? '#0ea5e9', opts.busColorStale ?? '#94a3b8');
+  drawBuses(
+    ctx,
+    v,
+    layers.buses,
+    opts.busColorFresh ?? '#0ea5e9',
+    opts.busColorStale ?? '#94a3b8',
+  );
   drawUser(ctx, v, layers.user, opts.userColor ?? '#dc2626');
 
   ctx.restore();
@@ -121,25 +134,27 @@ function drawMask(
 function drawRoutes(
   ctx: CanvasRenderingContext2D,
   v: Viewport,
-  shapes: number[][][] | null | undefined,
-  color: string,
+  routes: { shapes: number[][][]; color?: string }[] | null | undefined,
+  defaultColor: string,
 ): void {
-  if (!shapes || shapes.length === 0) return;
+  if (!routes || routes.length === 0) return;
   ctx.save();
-  ctx.strokeStyle = color;
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.globalAlpha = 0.6;
-  for (const shape of shapes) {
-    if (shape.length < 2) continue;
-    ctx.beginPath();
-    for (let i = 0; i < shape.length; i++) {
-      const p = latLngToScreen(shape[i][0], shape[i][1], v);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
+  for (const route of routes) {
+    ctx.strokeStyle = route.color ?? defaultColor;
+    for (const shape of route.shapes) {
+      if (shape.length < 2) continue;
+      ctx.beginPath();
+      for (let i = 0; i < shape.length; i++) {
+        const p = latLngToScreen(shape[i][0], shape[i][1], v);
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
   }
   ctx.restore();
 }
@@ -155,7 +170,8 @@ function drawBuses(
   for (const b of buses) {
     const p = latLngToScreen(b.lat, b.lng, v);
     if (p.x < -30 || p.x > v.width + 30 || p.y < -30 || p.y > v.height + 30) continue;
-    drawTeardropPin(ctx, p.x, p.y, b.stale ? staleColor : freshColor, b.heading);
+    const color = b.stale ? staleColor : (b.color ?? freshColor);
+    drawTeardropPin(ctx, p.x, p.y, color, b.heading);
   }
 }
 

@@ -18,7 +18,7 @@ const route: number[][][] = [[
   [-22.90, -43.19],
   [-22.895, -43.185],
 ]];
-map.setRoute(route);
+map.setRoutes([{ shapes: route }]);
 
 document.getElementById('recenter')?.addEventListener('click', () => map.recenter());
 document.getElementById('zoom-in')?.addEventListener('click', () => map.flyTo(-22.9083, -43.1964, 14));

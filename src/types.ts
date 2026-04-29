@@ -9,13 +9,19 @@ export interface Bus {
   lng: number;
   heading: number | null;
   stale: boolean;
+  color?: string;
+}
+
+export interface RouteLayer {
+  shapes: number[][][];
+  color?: string;
 }
 
 export interface MapHandle {
   setUser: (lat: number, lng: number) => void;
   setBuses: (buses: Bus[]) => void;
   clearBuses: () => void;
-  setRoute: (shapes: number[][][] | null) => void;
+  setRoutes: (routes: RouteLayer[] | null) => void;
   recenter: () => void;
   fitToBuses: (buses: { lat: number; lng: number }[]) => void;
   flyTo: (lat: number, lng: number, zoom?: number) => void;
@@ -23,7 +29,10 @@ export interface MapHandle {
   zoomOut: () => void;
   getCenter: () => { lat: number; lng: number; zoom: number };
   isInView: (lat: number, lng: number, paddingPx?: number) => boolean;
-  on: (event: 'click', cb: (lat: number, lng: number) => void) => void;
+  on: {
+    (event: 'click', cb: (lat: number, lng: number) => void): void;
+    (event: 'busclick', cb: (bus: Bus) => void): void;
+  };
   destroy: () => void;
 }
 

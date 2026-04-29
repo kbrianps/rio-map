@@ -49,6 +49,7 @@ interface AnimatedBus {
   startFrom: { lat: number; lng: number };
   heading: number | null;
   stale: boolean;
+  color?: string;
 }
 
 export function initMap(opts: RioMapOpts): MapHandle {
@@ -91,7 +92,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
     subdomains: opts.tileSubdomains ?? DEFAULT_SUBDOMAINS,
   });
 
-  let routeShapes: number[][][] | null = null;
+  let routeLayers: { shapes: number[][][]; color?: string }[] | null = null;
   let userPos: { lat: number; lng: number } | null = null;
   const busAnims = new Map<string, AnimatedBus>();
 
@@ -181,13 +182,14 @@ export function initMap(opts: RioMapOpts): MapHandle {
     if (needsRender || animating) {
       const layers: RenderLayers = {
         riomask: opts.showRioMask === false ? null : maskRings,
-        routes: routeShapes,
+        routes: routeLayers,
         buses: Array.from(busAnims.entries()).map(([id, a]) => ({
           id,
           lat: a.current.lat,
           lng: a.current.lng,
           heading: a.heading,
           stale: a.stale,
+          color: a.color,
         })),
         user: userPos,
       };
@@ -233,10 +235,35 @@ export function initMap(opts: RioMapOpts): MapHandle {
   ro.observe(container);
 
   const clickCbs: Array<(lat: number, lng: number) => void> = [];
+  const busClickCbs: Array<(bus: Bus) => void> = [];
+  const BUS_CLICK_RADIUS_PX = 22;
   canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    if (busClickCbs.length > 0) {
+      let closest: { id: string; dist: number; a: AnimatedBus } | null = null;
+      for (const [id, a] of busAnims) {
+        const p = latLngToScreen(a.current.lat, a.current.lng, viewport);
+        const dist = Math.hypot(p.x - x, p.y - y);
+        if (dist <= BUS_CLICK_RADIUS_PX && (!closest || dist < closest.dist)) {
+          closest = { id, dist, a };
+        }
+      }
+      if (closest) {
+        const a = closest.a;
+        const bus: Bus = {
+          id: closest.id,
+          lat: a.current.lat,
+          lng: a.current.lng,
+          heading: a.heading,
+          stale: a.stale,
+          color: a.color,
+        };
+        for (const cb of busClickCbs) cb(bus);
+        return;
+      }
+    }
     const { lat, lng } = screenToLatLng(x, y, viewport);
     for (const cb of clickCbs) cb(lat, lng);
   });
@@ -260,6 +287,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
             startFrom: { lat: b.lat, lng: b.lng },
             heading: b.heading,
             stale: b.stale,
+            color: b.color,
           });
         } else {
           existing.startFrom = { lat: existing.current.lat, lng: existing.current.lng };
@@ -267,6 +295,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
           existing.startedAt = now;
           existing.heading = b.heading;
           existing.stale = b.stale;
+          existing.color = b.color;
         }
       }
       for (const id of busAnims.keys()) if (!seen.has(id)) busAnims.delete(id);
@@ -276,8 +305,8 @@ export function initMap(opts: RioMapOpts): MapHandle {
       busAnims.clear();
       requestRender();
     },
-    setRoute(shapes) {
-      routeShapes = shapes;
+    setRoutes(routes) {
+      routeLayers = routes;
       requestRender();
     },
     recenter() {
@@ -350,8 +379,9 @@ export function initMap(opts: RioMapOpts): MapHandle {
         p.y <= viewport.height + paddingPx
       );
     },
-    on(event, cb) {
-      if (event === 'click') clickCbs.push(cb);
+    on(event: 'click' | 'busclick', cb: (...args: never[]) => void) {
+      if (event === 'click') clickCbs.push(cb as (lat: number, lng: number) => void);
+      else if (event === 'busclick') busClickCbs.push(cb as (bus: Bus) => void);
     },
     destroy() {
       cancelAnimationFrame(rafId);
