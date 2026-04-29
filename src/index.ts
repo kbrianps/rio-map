@@ -379,6 +379,9 @@ export function initMap(opts: RioMapOpts): MapHandle {
         p.y <= viewport.height + paddingPx
       );
     },
+    latLngToContainer(lat, lng) {
+      return latLngToScreen(lat, lng, viewport);
+    },
     on(event: 'click' | 'busclick', cb: (...args: never[]) => void) {
       if (event === 'click') clickCbs.push(cb as (lat: number, lng: number) => void);
       else if (event === 'busclick') busClickCbs.push(cb as (bus: Bus) => void);

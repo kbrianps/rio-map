@@ -29,6 +29,7 @@ export interface MapHandle {
   zoomOut: () => void;
   getCenter: () => { lat: number; lng: number; zoom: number };
   isInView: (lat: number, lng: number, paddingPx?: number) => boolean;
+  latLngToContainer: (lat: number, lng: number) => { x: number; y: number };
   on: {
     (event: 'click', cb: (lat: number, lng: number) => void): void;
     (event: 'busclick', cb: (bus: Bus) => void): void;
