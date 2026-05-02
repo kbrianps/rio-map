@@ -1,6 +1,6 @@
 {
   "name": "@kbrianps/rio-map",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Mapa minimalista do município do Rio de Janeiro com tiles CartoCDN. Zero deps, ~10 KB gzip.",
   "type": "module",
   "main": "dist/index.js",

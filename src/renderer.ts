@@ -6,7 +6,7 @@ export interface RenderLayers {
   /** Polygon rings of the Rio municipality (outer rings as [lat, lng] arrays). */
   riomask?: number[][][] | null;
   /** Route layers — one per logical line, each with its own color. */
-  routes?: { shapes: number[][][]; color?: string; dashed?: boolean }[] | null;
+  routes?: { shapes: number[][][]; color?: string }[] | null;
   /** Animated bus markers (interpolated current positions). */
   buses?: {
     lat: number;
@@ -135,10 +135,7 @@ function drawMask(
 function drawRoutes(
   ctx: CanvasRenderingContext2D,
   v: Viewport,
-  routes:
-    | { shapes: number[][][]; color?: string; dashed?: boolean }[]
-    | null
-    | undefined,
+  routes: { shapes: number[][][]; color?: string }[] | null | undefined,
   defaultColor: string,
 ): void {
   if (!routes || routes.length === 0) return;
@@ -149,8 +146,6 @@ function drawRoutes(
   ctx.globalAlpha = 0.6;
   for (const route of routes) {
     ctx.strokeStyle = route.color ?? defaultColor;
-    if (route.dashed) ctx.setLineDash([10, 8]);
-    else ctx.setLineDash([]);
     for (const shape of route.shapes) {
       if (shape.length < 2) continue;
       ctx.beginPath();
