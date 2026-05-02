@@ -51,6 +51,7 @@ interface AnimatedBus {
   stale: boolean;
   color?: string;
   pending?: boolean;
+  offRoute?: boolean;
 }
 
 export function initMap(opts: RioMapOpts): MapHandle {
@@ -192,6 +193,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
           stale: a.stale,
           color: a.color,
           pending: a.pending,
+          offRoute: a.offRoute,
         })),
         user: userPos,
       };
@@ -301,6 +303,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
             stale: b.stale,
             color: b.color,
             pending: b.pending,
+            offRoute: b.offRoute,
           });
         } else {
           existing.startFrom = { lat: existing.current.lat, lng: existing.current.lng };
@@ -310,6 +313,7 @@ export function initMap(opts: RioMapOpts): MapHandle {
           existing.stale = b.stale;
           existing.color = b.color;
           existing.pending = b.pending;
+          existing.offRoute = b.offRoute;
         }
       }
       for (const id of busAnims.keys()) if (!seen.has(id)) busAnims.delete(id);

@@ -16,6 +16,7 @@ export interface RenderLayers {
     id: string;
     color?: string;
     pending?: boolean;
+    offRoute?: boolean;
   }[];
   /** User location pin. */
   user?: { lat: number; lng: number } | null;
@@ -180,7 +181,25 @@ function drawBuses(
     } else {
       drawTeardropPin(ctx, p.x, p.y, color, b.heading);
     }
+    if (b.offRoute) drawOffRouteBadge(ctx, p.x + 9, p.y - 18);
   }
+}
+
+function drawOffRouteBadge(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.stroke();
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 10px system-ui, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('?', x, y + 0.5);
+  ctx.restore();
 }
 
 function drawUser(

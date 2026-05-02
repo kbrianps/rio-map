@@ -11,6 +11,7 @@ export interface Bus {
   stale: boolean;
   color?: string;
   pending?: boolean;
+  offRoute?: boolean;
 }
 
 export interface RouteLayer {
