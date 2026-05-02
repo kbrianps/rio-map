@@ -15,6 +15,7 @@ export interface RenderLayers {
     stale: boolean;
     id: string;
     color?: string;
+    pending?: boolean;
   }[];
   /** User location pin. */
   user?: { lat: number; lng: number } | null;
@@ -176,7 +177,14 @@ function drawBuses(
     const p = latLngToScreen(b.lat, b.lng, v);
     if (p.x < -30 || p.x > v.width + 30 || p.y < -30 || p.y > v.height + 30) continue;
     const color = b.stale ? staleColor : (b.color ?? freshColor);
-    drawTeardropPin(ctx, p.x, p.y, color, b.heading);
+    if (b.pending) {
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      drawTeardropPin(ctx, p.x, p.y, color, b.heading);
+      ctx.restore();
+    } else {
+      drawTeardropPin(ctx, p.x, p.y, color, b.heading);
+    }
   }
 }
 

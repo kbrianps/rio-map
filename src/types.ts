@@ -10,6 +10,7 @@ export interface Bus {
   heading: number | null;
   stale: boolean;
   color?: string;
+  pending?: boolean;
 }
 
 export interface RouteLayer {
